@@ -1,0 +1,2785 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>SmartTour India</title>
+    <link
+      rel="stylesheet"
+      href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+      integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
+      crossorigin=""
+    />
+    <style>
+      :root {
+        --bg-color: #f8fafc;
+        --text-main: #0f172a;
+        --text-muted: #475569;
+        --panel-bg: #ffffff;
+        --border-color: #e2e8f0;
+        --primary: #0284c7;
+        --primary-hover: #0369a1;
+        --accent: #f97316;
+        --shadow: rgba(15, 23, 42, 0.08);
+        --header-bg: #ffffff;
+        --card-bg: #f8fafc;
+        --success: #16a34a;
+        --danger: #dc2626;
+      }
+
+      body.dark-mode {
+        --bg-color: #090d16;
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+        --panel-bg: #111827;
+        --border-color: #1f2937;
+        --shadow: rgba(0, 0, 0, 0.4);
+        --header-bg: #111827;
+        --card-bg: #1f2937;
+        --success: #4ade80;
+        --danger: #f87171;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        background: var(--bg-color);
+        color: var(--text-main);
+        transition:
+          background 0.3s,
+          color 0.3s;
+      }
+      button,
+      input,
+      select {
+        font: inherit;
+      }
+      button {
+        cursor: pointer;
+      }
+
+      /* Header & Nav */
+      .topbar {
+        min-height: 70px;
+        background: var(--header-bg);
+        border-bottom: 2px solid var(--border-color);
+        display: flex;
+        align-items: center;
+        padding: 10px 32px;
+        gap: 20px;
+        position: sticky;
+        top: 0;
+        z-index: 20;
+        box-shadow: 0 4px 12px var(--shadow);
+        flex-wrap: wrap;
+      }
+      .logo {
+        font-size: 24px;
+        font-weight: 900;
+        color: var(--text-main);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        letter-spacing: -0.5px;
+      }
+      .logo span {
+        color: var(--accent);
+      }
+      .nav {
+        display: flex;
+        align-items: center;
+        gap: 24px;
+        flex: 1;
+        overflow-x: auto;
+        white-space: nowrap;
+      }
+      .nav button {
+        border: 0;
+        background: none;
+        color: var(--text-muted);
+        padding: 8px 0;
+        font-weight: 600;
+        font-size: 14px;
+        transition: all 0.2s;
+        border-bottom: 2px solid transparent;
+      }
+      .nav button:hover {
+        color: var(--accent);
+      }
+      .nav button.active {
+        color: var(--accent);
+        border-bottom: 2px solid var(--accent);
+      }
+
+      .auth-group {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+      }
+      .btn-login {
+        background: var(--accent);
+        color: #fff;
+        border: none;
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-weight: 600;
+        font-size: 14px;
+        transition: opacity 0.2s;
+      }
+      .btn-login:hover {
+        opacity: 0.9;
+      }
+      .user-profile {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        cursor: pointer;
+        padding: 6px 12px;
+        border-radius: 8px;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+      }
+      .user-avatar {
+        width: 30px;
+        height: 30px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--primary));
+      }
+      .user-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-main);
+      }
+      .mode {
+        border: 1px solid var(--border-color);
+        border-radius: 50%;
+        width: 38px;
+        height: 38px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: var(--panel-bg);
+        font-size: 16px;
+      }
+
+      /* Layout */
+      .layout {
+        display: grid;
+        grid-template-columns: 290px 1fr;
+        gap: 28px;
+        max-width: 1520px;
+        margin: auto;
+        padding: 28px;
+      }
+      .sidebar {
+        background: var(--panel-bg);
+        border-radius: 14px;
+        padding: 22px;
+        box-shadow: 0 4px 16px var(--shadow);
+        height: max-content;
+        border: 1px solid var(--border-color);
+      }
+      .field {
+        margin: 14px 0;
+      }
+      .field label {
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: var(--text-muted);
+        margin-bottom: 6px;
+      }
+      .sidebar select,
+      .sidebar input,
+      .simple select,
+      .simple input {
+        width: 100%;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        padding: 10px 12px;
+        font-size: 13px;
+        background: var(--bg-color);
+        color: var(--text-main);
+        outline: none;
+        transition: border-color 0.2s;
+      }
+      .sidebar select:focus,
+      .sidebar input:focus {
+        border-color: var(--accent);
+      }
+      .planbtn {
+        width: 100%;
+        border: 0;
+        border-radius: 10px;
+        padding: 12px;
+        background: linear-gradient(135deg, var(--accent), #ea580c);
+        color: #fff;
+        font-weight: 700;
+        margin-top: 14px;
+        transition:
+          transform 0.2s,
+          opacity 0.2s;
+      }
+      .planbtn:hover {
+        opacity: 0.95;
+        transform: translateY(-1px);
+      }
+
+      /* Sections */
+      .main {
+        min-width: 0;
+      }
+      .section {
+        display: none;
+      }
+      .section.active {
+        display: block;
+        animation: fadeIn 0.3s ease-in-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(6px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      /* Cards */
+      .simple {
+        background: var(--panel-bg);
+        border-radius: 14px;
+        padding: 28px;
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 16px var(--shadow);
+        margin-bottom: 28px;
+      }
+      .simple h2 {
+        margin-top: 0;
+        font-size: 24px;
+        color: var(--text-main);
+        font-weight: 800;
+        letter-spacing: -0.5px;
+      }
+      .grid-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        gap: 20px;
+        margin-top: 20px;
+      }
+      .card {
+        border-radius: 12px;
+        overflow: hidden;
+        background: var(--panel-bg);
+        border: 1px solid var(--border-color);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        cursor: pointer;
+        display: flex;
+        flex-direction: column;
+      }
+      .card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px var(--shadow);
+        border-color: var(--accent);
+      }
+      .card-img {
+        height: 170px;
+        background-size: cover;
+        background-position: center;
+        position: relative;
+      }
+      .card-content {
+        padding: 18px;
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        justify-content: space-between;
+      }
+      .card-content h3 {
+        margin: 0 0 6px;
+        font-size: 17px;
+        color: var(--text-main);
+        font-weight: 700;
+      }
+      .card-content p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 0 0 14px;
+      }
+      .g-badge {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        background: rgba(15, 23, 42, 0.88);
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 700;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .g-rating {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-wrap: wrap;
+        margin: 0 0 10px;
+        font-size: 13px;
+        font-weight: 700;
+      }
+      .g-rating.inline {
+        display: inline-flex;
+        margin: 0 0 0 6px;
+        font-size: 12px;
+        vertical-align: middle;
+      }
+      .g-rating .muted {
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .star-wrap {
+        position: relative;
+        display: inline-block;
+        letter-spacing: 1px;
+        line-height: 1;
+        font-size: 14px;
+      }
+      .star-bg {
+        color: #cbd5e1;
+      }
+      .star-fg {
+        position: absolute;
+        left: 0;
+        top: 0;
+        overflow: hidden;
+        white-space: nowrap;
+        color: #fbbc04;
+      }
+      .g-count {
+        color: var(--text-muted);
+        font-weight: 600;
+        font-size: 12px;
+      }
+      .g-link {
+        color: var(--primary);
+        font-size: 11px;
+        font-weight: 700;
+        text-decoration: none;
+      }
+      .g-link:hover {
+        text-decoration: underline;
+      }
+      .google-box {
+        margin-top: 18px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color);
+      }
+      .google-box p {
+        font-size: 11px;
+        color: var(--text-muted);
+        margin: 0 0 8px;
+        line-height: 1.4;
+      }
+      .status-ok {
+        color: var(--success);
+        font-size: 11px;
+        font-weight: 700;
+      }
+      .status-warn {
+        color: var(--danger);
+        font-size: 11px;
+        font-weight: 700;
+      }
+
+      /* Transport Interactive Cards */
+      .transport-card {
+        background: var(--card-bg);
+        border-radius: 12px;
+        border: 2px solid var(--border-color);
+        padding: 22px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: left;
+        width: 100%;
+      }
+      .transport-card:hover {
+        border-color: var(--accent);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px var(--shadow);
+      }
+      .transport-card.selected-transport {
+        border-color: var(--accent);
+        background: rgba(249, 115, 22, 0.05);
+      }
+
+      /* Generator Results */
+      .result {
+        background: var(--card-bg) !important;
+        border-radius: 12px;
+        padding: 24px;
+        border: 1px solid var(--border-color);
+        margin-top: 24px;
+      }
+      .result h2 {
+        color: var(--accent);
+        font-size: 20px;
+        margin: 0 0 16px;
+      }
+      .result h3 {
+        color: var(--text-main);
+        font-size: 16px;
+        margin: 18px 0 10px;
+        font-weight: 700;
+      }
+      .result .row {
+        padding: 10px 0;
+        display: flex;
+        justify-content: space-between;
+        border-bottom: 1px solid var(--border-color);
+        font-size: 14px;
+      }
+      .dayplan {
+        border-left: 3px solid var(--accent);
+        padding: 14px;
+        margin: 12px 0;
+        background: var(--panel-bg);
+        border-radius: 0 8px 8px 0;
+        border-top: 1px solid var(--border-color);
+        border-right: 1px solid var(--border-color);
+        border-bottom: 1px solid var(--border-color);
+      }
+      .dayplan h4 {
+        margin: 0 0 8px;
+        color: var(--text-main);
+        font-size: 14px;
+        font-weight: 700;
+      }
+      .dayplan p {
+        font-size: 13px;
+        color: var(--text-muted);
+        margin: 6px 0;
+      }
+      .ok {
+        color: var(--success) !important;
+        font-weight: 700;
+      }
+      .warn {
+        color: var(--danger) !important;
+        font-weight: 700;
+      }
+
+      /* Modal */
+      .modal-overlay {
+        display: none;
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.6);
+        z-index: 1000;
+        align-items: center;
+        justify-content: center;
+        backdrop-filter: blur(4px);
+      }
+      .modal-overlay.active {
+        display: flex;
+      }
+      .modal {
+        background: var(--panel-bg);
+        border-radius: 18px;
+        padding: 36px;
+        max-width: 600px;
+        width: 90%;
+        color: var(--text-main);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+        border: 1px solid var(--border-color);
+      }
+      .modal input {
+        width: 100%;
+        padding: 12px;
+        margin: 10px 0;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        background: var(--bg-color);
+        color: var(--text-main);
+        outline: none;
+      }
+      .photo-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px;
+        margin: 20px 0;
+      }
+      .photo-card {
+        border: 2px solid var(--border-color);
+        border-radius: 10px;
+        cursor: pointer;
+        text-align: center;
+        background: var(--bg-color);
+        overflow: hidden;
+        transition: 0.2s;
+      }
+      .photo-card img {
+        width: 100%;
+        height: 100px;
+        object-fit: cover;
+        display: block;
+      }
+      .photo-card h3 {
+        font-size: 12px;
+        margin: 8px 0;
+        font-weight: 600;
+      }
+      .photo-card.selected {
+        border-color: var(--accent);
+        box-shadow: 0 0 0 2px rgba(249, 115, 22, 0.2);
+      }
+      .tag-badge {
+        display: inline-block;
+        padding: 4px 10px;
+        background: var(--card-bg);
+        border: 1px solid var(--accent);
+        border-radius: 12px;
+        font-size: 11px;
+        margin-right: 4px;
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .map-wrap {
+        height: 440px;
+        border-radius: 12px;
+        overflow: hidden;
+        border: 1px solid var(--border-color);
+        margin-top: 16px;
+        z-index: 1;
+      }
+      .map-wrap.tall {
+        height: 520px;
+      }
+      .map-wrap.plan {
+        height: 320px;
+        margin: 16px 0 8px;
+      }
+      .leaflet-container {
+        font-family: inherit;
+        background: var(--card-bg);
+      }
+      .leaflet-popup-content-wrapper {
+        background: var(--panel-bg);
+        color: var(--text-main);
+        border-radius: 10px;
+      }
+      .leaflet-popup-content {
+        margin: 12px 14px;
+        font-size: 13px;
+      }
+      .leaflet-popup-tip {
+        background: var(--panel-bg);
+      }
+      .leaflet-popup-content h3 {
+        margin: 0 0 6px;
+        font-size: 15px;
+      }
+      .leaflet-popup-content p {
+        margin: 0 0 10px;
+        color: var(--text-muted);
+      }
+      .map-popup-btn {
+        border: 0;
+        border-radius: 8px;
+        padding: 8px 12px;
+        background: var(--accent);
+        color: #fff;
+        font-weight: 700;
+        font-size: 12px;
+      }
+      .map-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        margin-top: 12px;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-weight: 600;
+      }
+      .map-legend span {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .map-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+
+      @media (max-width: 900px) {
+        .layout {
+          grid-template-columns: 1fr;
+        }
+        .nav {
+          order: 3;
+          flex-basis: 100%;
+          padding-top: 10px;
+        }
+        .photo-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+        .map-wrap,
+        .map-wrap.tall {
+          height: 340px;
+        }
+      }
+      /* PATCHED UX */
+      :root {
+        --bg-color: #fffaf5;
+        --text-main: #2b1608;
+        --text-muted: #7c5a45;
+        --panel-bg: #fff;
+        --border-color: #f3d7c2;
+        --primary: #f97316;
+        --primary-hover: #ea580c;
+        --accent: #f97316;
+        --shadow: rgba(249, 115, 22, 0.14);
+        --header-bg: #fff;
+        --card-bg: #fff7ed;
+      }
+      body.dark-mode {
+        --bg-color: #061426;
+        --text-main: #eaf3ff;
+        --text-muted: #94afd0;
+        --panel-bg: #0b1d33;
+        --border-color: #193654;
+        --shadow: rgba(0, 0, 0, 0.45);
+        --header-bg: #0b1d33;
+        --card-bg: #102844;
+        --primary: #4d9aff;
+        --primary-hover: #76b1ff;
+        --accent: #4d9aff;
+      }
+      body.gems-mode {
+        --bg-color: #eef6ff;
+        --text-main: #09244d;
+        --text-muted: #527096;
+        --panel-bg: #fff;
+        --border-color: #b9d5f7;
+        --primary: #075fc9;
+        --primary-hover: #064da5;
+        --accent: #0b72ff;
+        --shadow: rgba(7, 95, 201, 0.16);
+        --header-bg: #eaf4ff;
+        --card-bg: #f1f8ff;
+      }
+      body.gems-mode .nav button[data-section="gems"] {
+        display: none;
+      }
+      body.gems-mode #gems {
+        display: none !important;
+      }
+      .mode {
+        transition: 0.25s ease;
+      }
+      .mode:hover {
+        transform: rotate(8deg) scale(1.08);
+      }
+      .nav button {
+        position: relative;
+        overflow: hidden;
+      }
+      .nav button::after {
+        content: "";
+        position: absolute;
+        left: 50%;
+        bottom: -2px;
+        width: 0;
+        height: 2px;
+        background: var(--accent);
+        transition: 0.25s;
+      }
+      .nav button:hover::after,
+      .nav button.active::after {
+        width: 100%;
+        left: 0;
+      }
+      .card {
+        animation: cardRise 0.55s cubic-bezier(0.2, 0.75, 0.25, 1) both;
+      }
+      .card:nth-child(2) {
+        animation-delay: 0.04s;
+      }
+      .card:nth-child(3) {
+        animation-delay: 0.08s;
+      }
+      .card:nth-child(4) {
+        animation-delay: 0.12s;
+      }
+      @keyframes cardRise {
+        from {
+          opacity: 0;
+          transform: translateY(12px) scale(0.985);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0) scale(1);
+        }
+      }
+      .simple {
+        transition: 0.3s;
+      }
+      .simple:hover {
+        box-shadow: 0 14px 34px var(--shadow);
+      }
+      .gem-badge {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        background: rgba(7, 95, 201, 0.92);
+        color: #fff;
+        padding: 5px 9px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .review-box {
+        margin-top: 14px;
+        padding-top: 14px;
+        border-top: 1px solid var(--border-color);
+      }
+      .review-head {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .review-title {
+        font-size: 12px;
+        font-weight: 800;
+      }
+      .review-count {
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+      .review {
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 9px;
+        padding: 9px;
+        margin-top: 7px;
+      }
+      .review-meta {
+        display: flex;
+        justify-content: space-between;
+        gap: 8px;
+      }
+      .review-name {
+        font-size: 11px;
+        font-weight: 800;
+      }
+      .review-date {
+        font-size: 10px;
+        color: var(--text-muted);
+      }
+      .review p {
+        margin: 4px 0 0;
+        font-size: 11px;
+        line-height: 1.45;
+        color: var(--text-muted);
+      }
+      .review-form {
+        display: grid;
+        gap: 9px;
+        margin-top: 12px;
+      }
+      .review-form input,
+      .review-form textarea,
+      .review-form select {
+        width: 100%;
+        padding: 10px 12px;
+        border: 1px solid var(--border-color);
+        border-radius: 9px;
+        background: var(--bg-color);
+        color: var(--text-main);
+      }
+      .review-form textarea {
+        min-height: 80px;
+        resize: vertical;
+      }
+      .tiny-btn {
+        cursor: pointer;
+        border: 1px solid var(--border-color);
+        background: var(--panel-bg);
+        color: var(--text-main);
+        border-radius: 9px;
+        padding: 9px 12px;
+        font-weight: 700;
+      }
+      #skeletonScreen {
+        position: fixed;
+        inset: 0;
+        z-index: 5000;
+        background: var(--bg-color);
+        padding: 28px;
+        display: flex;
+        justify-content: center;
+        transition:
+          opacity 0.45s,
+          visibility 0.45s;
+      }
+      .skeleton-hidden {
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+      }
+      .skeleton-shell {
+        width: min(1520px, 100%);
+      }
+      .sk-top,
+      .sk-side,
+      .sk-card,
+      .sk-wide {
+        background: linear-gradient(
+          90deg,
+          var(--card-bg) 25%,
+          var(--border-color) 37%,
+          var(--card-bg) 63%
+        );
+        background-size: 400% 100%;
+        animation: shimmer 1.35s linear infinite;
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+      }
+      .sk-top {
+        height: 62px;
+        margin-bottom: 22px;
+      }
+      .sk-layout {
+        display: grid;
+        grid-template-columns: 290px 1fr;
+        gap: 28px;
+      }
+      .sk-side {
+        height: 470px;
+      }
+      .sk-main {
+        display: grid;
+        gap: 18px;
+      }
+      .sk-wide {
+        height: 130px;
+      }
+      .sk-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 16px;
+      }
+      .sk-card {
+        height: 240px;
+      }
+      @keyframes shimmer {
+        0% {
+          background-position: 100% 0;
+        }
+        100% {
+          background-position: -100% 0;
+        }
+      }
+      @media (max-width: 900px) {
+        .sk-layout {
+          grid-template-columns: 1fr;
+        }
+        .sk-side {
+          height: 180px;
+        }
+        .sk-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topbar">
+      <div class="logo">Smart<span>Tour</span></div>
+      <div class="nav">
+        <button class="active" onclick="showSection('home', this)">Home</button>
+        <button onclick="showSection('destinations', this)">
+          Destinations
+        </button>
+        <button onclick="showSection('map', this)">Map</button>
+        <button onclick="showSection('planner', this)">Plan Trip</button>
+        <button onclick="showSection('transport', this)">Transport</button>
+        <button onclick="showSection('favourite', this)">Favourite</button>
+        <button onclick="showSection('history', this)">History</button>
+        <button data-section="gems" onclick="showSection('gems', this)">
+          Gems
+        </button>
+      </div>
+      <div class="auth-group">
+        <button
+          class="mode"
+          onclick="cycleTheme()"
+          id="themeBtn"
+          title="Toggle Theme"
+        >
+          🌙
+        </button>
+        <button
+          id="loginBtn"
+          class="btn-login"
+          onclick="openModal('loginModal')"
+        >
+          Login
+        </button>
+        <div
+          class="user-profile"
+          id="user-profile"
+          style="display: none"
+          onclick="logout()"
+        >
+          <div class="user-avatar"></div>
+          <div class="user-name" id="user-name">Traveler</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Login Modal -->
+    <div class="modal-overlay" id="loginModal">
+      <div class="modal" style="max-width: 400px">
+        <h2>Welcome Back 👋</h2>
+        <p style="color: var(--text-muted); font-size: 13px">
+          Use prototype credentials: <b>user@smarttour.com / demo123</b>
+        </p>
+        <input
+          type="email"
+          id="loginId"
+          placeholder="Email"
+          value="user@smarttour.com"
+        />
+        <input
+          type="password"
+          id="loginPass"
+          placeholder="Password"
+          value="demo123"
+        />
+        <button class="planbtn" onclick="executeLogin()">
+          Login & Discover Vibe
+        </button>
+        <button
+          style="
+            width: 100%;
+            padding: 12px;
+            margin-top: 8px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            font-weight: 600;
+          "
+          onclick="closeModal('loginModal')"
+        >
+          Cancel
+        </button>
+      </div>
+    </div>
+
+    <!-- Photo Quiz Modal -->
+    <div class="modal-overlay" id="photoModal">
+      <div class="modal">
+        <h2>What's your travel vibe?</h2>
+        <p style="color: var(--text-muted); font-size: 13px">
+          Select photos you love to personalize your exploration tags.
+        </p>
+        <div class="photo-grid" id="photoGrid">
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="Mountains"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1519681393784-d120267933ba?auto=format&fit=crop&w=300&q=80"
+              alt="Mountains"
+            />
+            <h3>⛰️ Mountains</h3>
+          </div>
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="Beaches"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=300&q=80"
+              alt="Beaches"
+            />
+            <h3>🏖️ Beaches</h3>
+          </div>
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="Culture"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1524492412937-b28074a5d7da?auto=format&fit=crop&w=300&q=80"
+              alt="Culture"
+            />
+            <h3>🕌 Culture & History</h3>
+          </div>
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="Nature"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1448375240586-882707db888b?auto=format&fit=crop&w=300&q=80"
+              alt="Nature"
+            />
+            <h3>🌲 Nature & Forests</h3>
+          </div>
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="City"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1529253355930-ddbe423a2ac7?auto=format&fit=crop&w=300&q=80"
+              alt="City"
+            />
+            <h3>🏙️ City Life</h3>
+          </div>
+          <div
+            class="photo-card"
+            onclick="this.classList.toggle('selected')"
+            data-tag="Adventure"
+          >
+            <img
+              src="https://images.unsplash.com/photo-1533692328991-08159ff19fca?auto=format&fit=crop&w=300&q=80"
+              alt="Adventure"
+            />
+            <h3>🧗 Adventure</h3>
+          </div>
+        </div>
+        <div style="display: flex; gap: 10px">
+          <button
+            class="planbtn"
+            style="background: var(--border-color); color: var(--text-main)"
+            onclick="closeModal('photoModal')"
+          >
+            Skip
+          </button>
+          <button class="planbtn" onclick="savePreferences()">
+            Save Preferences
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="layout">
+      <aside class="sidebar">
+        <h3
+          style="
+            margin-top: 0;
+            color: var(--accent);
+            font-size: 15px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+          "
+        >
+          🎯 Quick Plan
+        </h3>
+        <div class="field">
+          <label>From (Origin)</label>
+          <select id="quickFrom"></select>
+        </div>
+        <div class="field">
+          <label>Destination</label>
+          <select id="quickDest"></select>
+        </div>
+        <div class="field">
+          <label>Group Type</label>
+          <select id="quickGroup">
+            <option value="1">Solo Traveler (1)</option>
+            <option value="2" selected>Duo / Couple (2)</option>
+            <option value="4">Family (4)</option>
+            <option value="5">Friends Group (5+)</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Exploration Time (Hrs/Day)</label>
+          <input type="number" id="quickHours" value="6" min="1" max="14" />
+        </div>
+        <div class="field">
+          <label>Days</label>
+          <input type="number" id="quickDays" value="3" min="1" />
+        </div>
+        <div class="field">
+          <label>Budget (₹)</label>
+          <input type="number" id="quickBudget" value="30000" step="1000" />
+        </div>
+        <button class="planbtn" onclick="syncPlannerAndGenerate()">
+          Generate Plan
+        </button>
+        <div class="google-box">
+          <label
+            style="
+              display: block;
+              font-size: 11px;
+              font-weight: 700;
+              text-transform: uppercase;
+              letter-spacing: 0.5px;
+              color: var(--text-muted);
+              margin-bottom: 6px;
+            "
+            >Google ratings</label
+          >
+          <p>
+            Paste a Google Maps API key (Places API enabled) to load live ★
+            ratings.
+          </p>
+          <input
+            type="password"
+            id="googleKey"
+            placeholder="AIza…"
+            autocomplete="off"
+          />
+          <button
+            class="planbtn"
+            style="margin-top: 8px"
+            onclick="saveGoogleKey()"
+          >
+            Load Google ratings
+          </button>
+          <p id="googleRatingStatus" style="margin-top: 8px"></p>
+        </div>
+      </aside>
+
+      <main class="main">
+        <section class="section active" id="home">
+          <div
+            class="simple"
+            style="
+              background: linear-gradient(
+                135deg,
+                #0284c7 0%,
+                #0369a1 50%,
+                #f97316 100%
+              );
+              color: #fff;
+              padding: 42px;
+              border: none;
+              margin-bottom: 28px;
+              position: relative;
+              overflow: hidden;
+            "
+          >
+            <h1
+              style="
+                font-size: 38px;
+                margin: 0 0 10px;
+                color: #fff;
+                font-weight: 900;
+                letter-spacing: -1px;
+              "
+            >
+              Explore Incredible India.
+            </h1>
+            <p
+              style="
+                font-size: 16px;
+                margin: 0;
+                opacity: 0.95;
+                max-width: 600px;
+                line-height: 1.5;
+              "
+            >
+              Smart itineraries, realistic budgets scaled for your group, living
+              heritage sites, and breathtaking hidden gems.
+            </p>
+          </div>
+
+          <div class="simple">
+            <h2>🔥 Trending Destinations</h2>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Handpicked locations to kickstart your next national adventure.
+            </p>
+            <div class="grid-container" id="homeGrid"></div>
+          </div>
+
+          <div class="simple">
+            <h2>🗺️ Live India Map</h2>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Pan, zoom, and tap a pin to plan a trip. Markers update from your
+              destination list.
+            </p>
+            <div id="homeMap" class="map-wrap"></div>
+            <div class="map-legend">
+              <span
+                ><i class="map-dot" style="background: #f97316"></i>
+                Destination</span
+              >
+              <span
+                ><i class="map-dot" style="background: #0284c7"></i> Origin
+                city</span
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- Destinations Tab -->
+        <section class="section" id="destinations">
+          <div class="simple">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 12px;
+              "
+            >
+              <h2>Explore Destinations</h2>
+              <div id="userTagsDisplay"></div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Log in and take the photo quiz to filter locations by your travel
+              style preference!
+            </p>
+            <div class="grid-container" id="destGrid"></div>
+          </div>
+        </section>
+
+        <section class="section" id="map">
+          <div class="simple">
+            <div
+              style="
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                flex-wrap: wrap;
+                gap: 12px;
+              "
+            >
+              <h2>Explore on the Map</h2>
+              <div style="display: flex; gap: 10px; flex-wrap: wrap">
+                <select
+                  id="mapFocus"
+                  onchange="focusMapPlace(this.value)"
+                  style="
+                    min-width: 180px;
+                    border: 1px solid var(--border-color);
+                    border-radius: 8px;
+                    padding: 10px 12px;
+                    background: var(--bg-color);
+                    color: var(--text-main);
+                  "
+                >
+                  <option value="">Fly to a place…</option>
+                </select>
+                <button
+                  class="planbtn"
+                  style="width: auto; margin: 0; padding: 10px 16px"
+                  onclick="fitAllMarkers()"
+                >
+                  Fit all pins
+                </button>
+              </div>
+            </div>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Interactive OpenStreetMap of India. Route line appears after you
+              generate a trip plan.
+            </p>
+            <div id="exploreMap" class="map-wrap tall"></div>
+            <div class="map-legend">
+              <span
+                ><i class="map-dot" style="background: #0284c7"></i>
+                Origin</span
+              >
+              <span
+                ><i class="map-dot" style="background: #f97316"></i>
+                Destination</span
+              >
+              <span
+                ><i class="map-dot" style="background: #16a34a"></i> Sight</span
+              >
+              <span
+                ><i class="map-dot" style="background: #7c3aed"></i> Route</span
+              >
+            </div>
+          </div>
+        </section>
+
+        <!-- Planner Tab -->
+        <section class="section" id="planner">
+          <div class="simple">
+            <h2>Create Your Itinerary</h2>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 16px;
+              "
+            >
+              <div class="field">
+                <label>From (Origin)</label
+                ><select id="planFrom"></select>
+              </div>
+              <div class="field">
+                <label>Destination</label
+                ><select id="planDest"></select>
+              </div>
+              <div class="field">
+                <label>Group Size</label>
+                <select id="planGroup">
+                  <option value="1">Solo (1)</option>
+                  <option value="2" selected>Duo (2)</option>
+                  <option value="4">Family (4)</option>
+                  <option value="5">Friends (5)</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Exploration Time (Hrs/Day)</label
+                ><input
+                  type="number"
+                  id="planHours"
+                  value="6"
+                  min="1"
+                  max="14"
+                />
+              </div>
+              <div class="field">
+                <label>Duration (Days)</label
+                ><input type="number" id="planDays" value="4" min="1" />
+              </div>
+              <div class="field">
+                <label>Total Budget (₹)</label
+                ><input
+                  type="number"
+                  id="planBudget"
+                  value="40000"
+                  min="1000"
+                />
+              </div>
+              <div class="field">
+                <label>Transport</label>
+                <select id="planTransport">
+                  <option value="Bus">Bus</option>
+                  <option value="Train">Train</option>
+                  <option value="Flight">Flight</option>
+                  <option value="Taxi">Taxi</option>
+                </select>
+              </div>
+            </div>
+            <button
+              class="planbtn"
+              style="max-width: 220px"
+              onclick="makePlan()"
+            >
+              Generate Custom Plan
+            </button>
+            <div id="planResult"></div>
+          </div>
+        </section>
+
+        <!-- Transport Tab -->
+        <section class="section" id="transport">
+          <div class="simple">
+            <h2>Transport Mode Selector</h2>
+            <p
+              style="
+                color: var(--text-muted);
+                font-size: 13px;
+                margin-bottom: 20px;
+              "
+            >
+              Click an option below to apply it directly to your active trip
+              planner.
+            </p>
+            <div
+              style="
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+                gap: 20px;
+              "
+            >
+              <button
+                class="transport-card"
+                id="transLuxCard"
+                onclick="selectTransportMode('Flight')"
+              >
+                <h3
+                  style="
+                    margin: 0 0 8px;
+                    color: var(--text-main);
+                    font-size: 17px;
+                  "
+                >
+                  ✈️ Luxury Class (Flights / 1AC)
+                </h3>
+                <p style="margin: 0; color: var(--text-muted); font-size: 13px">
+                  Fastest commute, supreme comfort. Est. ₹4,000 - ₹10,000+ per
+                  passenger.
+                </p>
+              </button>
+              <button
+                class="transport-card"
+                id="transBudCard"
+                onclick="selectTransportMode('Bus')"
+              >
+                <h3
+                  style="
+                    margin: 0 0 8px;
+                    color: var(--text-main);
+                    font-size: 17px;
+                  "
+                >
+                  🚌 Budget Explorer (Bus / Sleeper)
+                </h3>
+                <p style="margin: 0; color: var(--text-muted); font-size: 13px">
+                  Economical, authentic local feel. Est. ₹500 - ₹2,000 per
+                  passenger.
+                </p>
+              </button>
+            </div>
+          </div>
+        </section>
+
+        <section class="section" id="favourite">
+          <div class="simple">
+            <h2>❤️ Favourite Trips</h2>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Your bookmarked getaways will appear here.
+            </p>
+          </div>
+        </section>
+
+        <section class="section" id="history">
+          <div class="simple">
+            <h2>Past Trips Log</h2>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Your past journey records.
+            </p>
+          </div>
+        </section>
+
+        <section class="section" id="gems">
+          <div class="simple">
+            <h2>💎 Hidden Gems</h2>
+            <p style="color: var(--text-muted); font-size: 13px">
+              Explore off-the-beaten-path cultural wonders. Click any gem to
+              plan a trip instantly!
+            </p>
+            <div class="grid-container" id="gemsGrid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script
+      src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+      integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
+      crossorigin=""
+    ></script>
+    <script>
+      // Data
+      const origins = [
+        "Mumbai",
+        "Delhi",
+        "Bangalore",
+        "Hyderabad",
+        "Chennai",
+        "Kolkata",
+        "Pune",
+        "Ahmedabad",
+        "Jaipur",
+      ];
+
+      const originCoords = {
+        Mumbai: [19.076, 72.8777],
+        Delhi: [28.6139, 77.209],
+        Bangalore: [12.9716, 77.5946],
+        Hyderabad: [17.385, 78.4867],
+        Chennai: [13.0827, 80.2707],
+        Kolkata: [22.5726, 88.3639],
+        Pune: [18.5204, 73.8567],
+        Ahmedabad: [23.0225, 72.5714],
+        Jaipur: [26.9124, 75.7873],
+      };
+
+      /* ===== PATCHED THEME + HIDDEN GEMS + REVIEWS ===== */
+      const hiddenGemDestinations = {
+        ChandBaori: {
+          name: "Chand Baori",
+          region: "Abhaneri, Rajasthan",
+          tags: ["Architecture", "Culture"],
+          img: "https://images.unsplash.com/photo-1587135941948-670b381f08ce?w=600",
+          blurb: "A geometric stepwell hidden beyond the usual Jaipur circuit.",
+          base: "Jaipur",
+        },
+        Dzukou: {
+          name: "Dzukou Valley",
+          region: "Nagaland",
+          tags: ["Mountains", "Nature", "Adventure"],
+          img: "https://images.unsplash.com/photo-1464278533981-50106e6176b1?w=600",
+          blurb: "Wildflower-filled ridges and big-sky trekking.",
+          base: "Majuli",
+        },
+        Lepakshi: {
+          name: "Lepakshi",
+          region: "Andhra Pradesh",
+          tags: ["Culture", "Architecture", "History"],
+          img: "https://images.unsplash.com/photo-1606298855672-3efb63017be8?w=600",
+          blurb: "Vijayanagara-era stonework and the famous monolithic Nandi.",
+          base: "Hyderabad",
+        },
+        Khecheopalri: {
+          name: "Khecheopalri Lake",
+          region: "Sikkim",
+          tags: ["Nature", "Mountains"],
+          img: "https://images.unsplash.com/photo-1501785888041-af3ef285b470?w=600",
+          blurb: "A sacred forest lake wrapped in mist and mountain quiet.",
+          base: "Manali",
+        },
+        Chettinad: {
+          name: "Chettinad",
+          region: "Tamil Nadu",
+          tags: ["Culture", "Food", "Architecture"],
+          img: "https://images.unsplash.com/photo-1593693411515-c20261bcad6e?w=600",
+          blurb: "Heritage mansions, craft traditions and regional food.",
+          base: "Chennai",
+        },
+        Ziro: {
+          name: "Ziro Valley",
+          region: "Arunachal Pradesh",
+          tags: ["Nature", "Culture", "Music"],
+          img: "https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?w=600",
+          blurb: "Rice fields, Apatani culture and a slower Himalayan rhythm.",
+          base: "Majuli",
+        },
+        Orchha: {
+          name: "Orchha",
+          region: "Madhya Pradesh",
+          tags: ["History", "Architecture"],
+          img: "https://images.unsplash.com/photo-1524492412937-b28074a5d7da?w=600",
+          blurb: "Medieval palaces and temples without the mega-city rush.",
+          base: "Delhi",
+        },
+        MajuliDeep: {
+          name: "Majuli Island",
+          region: "Assam",
+          tags: ["Culture", "Nature"],
+          img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=600",
+          blurb: "Satras, mask-making and river-island life.",
+          base: "Majuli",
+        },
+      };
+      const localReviews = {
+        "Chand Baori": [
+          [
+            "Aarav",
+            5,
+            "The symmetry is wild in person. Go early for softer light.",
+            "2 weeks ago",
+          ],
+          ["Mira", 4, "Much quieter than the headline forts.", "1 month ago"],
+        ],
+        "Dzukou Valley": [
+          ["Anvi", 5, "The trek feels properly off-grid.", "3 weeks ago"],
+          [
+            "Arjun",
+            5,
+            "Green everywhere. Weather changes fast.",
+            "2 months ago",
+          ],
+        ],
+        Lepakshi: [
+          [
+            "Sahil",
+            4,
+            "The stone detailing is ridiculously good.",
+            "3 weeks ago",
+          ],
+          ["Tara", 5, "A sleeper hit for architecture nerds.", "1 month ago"],
+        ],
+        "Khecheopalri Lake": [
+          [
+            "Rhea",
+            5,
+            "Forest, mist and almost zero city noise.",
+            "3 weeks ago",
+          ],
+          ["Dev", 4, "Peaceful; respect the sacred setting.", "2 months ago"],
+        ],
+        Chettinad: [
+          [
+            "Ishita",
+            5,
+            "Architecture plus food is an elite combo.",
+            "1 week ago",
+          ],
+          [
+            "Vikram",
+            4,
+            "A local guide makes the mansions way better.",
+            "1 month ago",
+          ],
+        ],
+        "Ziro Valley": [
+          [
+            "Maya",
+            5,
+            "Beautifully slow and ridiculously green.",
+            "2 weeks ago",
+          ],
+          [
+            "Karan",
+            5,
+            "Perfect for a break from crowded circuits.",
+            "2 months ago",
+          ],
+        ],
+        Orchha: [
+          ["Neel", 5, "History nerd heaven.", "1 month ago"],
+          ["Pia", 4, "Sunset around the temples was the move.", "2 months ago"],
+        ],
+        "Majuli Island": [
+          [
+            "Ira",
+            5,
+            "The satras and craft culture are the highlight.",
+            "3 weeks ago",
+          ],
+          [
+            "Rohit",
+            4,
+            "Great place to slow down for a few days.",
+            "2 months ago",
+          ],
+        ],
+      };
+      const USER_REVIEW_STORAGE = "smarttour_user_reviews";
+      function esc(v) {
+        return String(v).replace(
+          /[&<>"']/g,
+          (c) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            })[c],
+        );
+      }
+      function getReviews(place) {
+        let u = [];
+        try {
+          u =
+            JSON.parse(localStorage.getItem(USER_REVIEW_STORAGE) || "{}")[
+              place
+            ] || [];
+        } catch (e) {}
+        return [
+          ...u,
+          ...(localReviews[place] || []).map((r) => ({
+            name: r[0],
+            rating: r[1],
+            text: r[2],
+            date: r[3],
+          })),
+        ];
+      }
+      function reviewHtml(place) {
+        const rs = getReviews(place);
+        return `<div class="review-box"><div class="review-head"><span class="review-title">💬 Reviews</span><span class="review-count">${rs.length} review${rs.length === 1 ? "" : "s"}</span></div>${rs
+          .slice(0, 2)
+          .map(
+            (r) =>
+              `<div class="review"><div class="review-meta"><span class="review-name">${esc(r.name)} · ${"★".repeat(Number(r.rating))}</span><span class="review-date">${esc(r.date || "now")}</span></div><p>${esc(r.text)}</p></div>`,
+          )
+          .join(
+            "",
+          )}<button class="tiny-btn" style="margin-top:8px;width:100%" onclick="event.stopPropagation();openReviewModal('${esc(place)}')">✍️ Add review</button></div>`;
+      }
+      function hiddenGemCard(k) {
+        const x = hiddenGemDestinations[k];
+        return `<div class="card" onclick="planHiddenGem('${k}')"><div class="card-img" style="background-image:url('${x.img}')"><span class="gem-badge">💎 Hidden Gem</span></div><div class="card-content"><h3>${x.name}</h3><div class="g-rating"><span>🇮🇳 ${x.region}</span></div><p>${x.blurb}</p><div>${x.tags.map((t) => `<span class="tag-badge">${t}</span>`).join("")}</div>${reviewHtml(x.name)}<span style="font-size:12px;font-weight:700;color:var(--accent);">Explore this gem ➔</span></div></div>`;
+      }
+      function openReviewModal(place) {
+        let m = document.getElementById("reviewModal");
+        if (!m) {
+          m = document.createElement("div");
+          m.id = "reviewModal";
+          m.className = "modal-overlay";
+          m.innerHTML = `<div class="modal" style="max-width:480px"><h2>✍️ Add a review</h2><p id="reviewPlaceLabel" style="color:var(--text-muted);font-size:13px"></p><div class="review-form"><input id="reviewPlace" type="hidden"><input id="reviewName" maxlength="40" placeholder="Your name"><select id="reviewRating"><option value="5">★★★★★ · 5</option><option value="4">★★★★ · 4</option><option value="3">★★★ · 3</option><option value="2">★★ · 2</option><option value="1">★ · 1</option></select><textarea id="reviewText" maxlength="280" placeholder="What stood out?"></textarea><button class="planbtn" onclick="saveUserReview()">Post review</button><button class="tiny-btn" onclick="closeModal('reviewModal')">Cancel</button></div></div>`;
+          document.body.appendChild(m);
+        }
+        document.getElementById("reviewPlace").value = place;
+        document.getElementById("reviewPlaceLabel").textContent = place;
+        openModal("reviewModal");
+      }
+      function saveUserReview() {
+        const place = document.getElementById("reviewPlace").value,
+          name =
+            document.getElementById("reviewName").value.trim() || "Traveler",
+          rating = Number(document.getElementById("reviewRating").value),
+          text = document.getElementById("reviewText").value.trim();
+        if (!text) return alert("Write a review first.");
+        let d = {};
+        try {
+          d = JSON.parse(localStorage.getItem(USER_REVIEW_STORAGE) || "{}");
+        } catch (e) {}
+        d[place] = d[place] || [];
+        d[place].unshift({ name, rating, text, date: "just now" });
+        localStorage.setItem(USER_REVIEW_STORAGE, JSON.stringify(d));
+        closeModal("reviewModal");
+        renderHomeGrid();
+        renderDestinations();
+      }
+      function planHiddenGem(k) {
+        const x = hiddenGemDestinations[k];
+        if (x && destinations[x.base]) {
+          document.getElementById("planDest").value = x.base;
+          document.getElementById("quickDest").value = x.base;
+        }
+        showSection("planner", navButtonFor("planner"));
+        makePlan();
+      }
+      let themeMode = localStorage.getItem("smarttour_theme") || "light";
+      function applyTheme() {
+        document.body.classList.remove("dark-mode", "gems-mode");
+        const b = document.getElementById("themeBtn");
+        if (themeMode === "light") {
+          b.textContent = "☀️";
+          b.title = "Light mode";
+        } else if (themeMode === "dark") {
+          document.body.classList.add("dark-mode");
+          b.textContent = "🌙";
+          b.title = "Dark mode";
+        } else {
+          document.body.classList.add("gems-mode");
+          b.textContent = "💎";
+          b.title = "Hidden Gems mode";
+        }
+        localStorage.setItem("smarttour_theme", themeMode);
+        const gemsNav = document.querySelector(
+          '.nav button[data-section="gems"]',
+        );
+        if (gemsNav) gemsNav.style.display = themeMode === "gems" ? "none" : "";
+      }
+      function cycleTheme() {
+        themeMode =
+          themeMode === "light"
+            ? "dark"
+            : themeMode === "dark"
+              ? "gems"
+              : "light";
+        applyTheme();
+        renderHomeGrid();
+        renderDestinations();
+        renderGems();
+        const gemsNav = document.querySelector(
+          '.nav button[data-section="gems"]',
+        );
+        if (gemsNav) gemsNav.style.display = themeMode === "gems" ? "none" : "";
+        if (
+          themeMode === "gems" &&
+          document.getElementById("gems").classList.contains("active")
+        ) {
+          showSection("home", navButtonFor("home"));
+        }
+        populateMaps();
+      }
+      const destinations = {
+        Goa: {
+          tags: ["Beaches", "Adventure"],
+          img: "https://images.unsplash.com/photo-1512343879784-a960bf40e7f2?w=400",
+          coords: [15.2993, 74.124],
+          query: "Goa, India",
+        },
+        Manali: {
+          tags: ["Mountains", "Adventure", "Nature"],
+          img: "https://images.unsplash.com/photo-1626621341517-bbf3d9990a23?w=400",
+          coords: [32.2396, 77.1887],
+          query: "Manali, Himachal Pradesh",
+        },
+        Jaipur: {
+          tags: ["Culture", "City"],
+          img: "https://images.unsplash.com/photo-1477587458883-47145ed94245?w=400",
+          coords: [26.9124, 75.7873],
+          query: "Jaipur, Rajasthan",
+        },
+        Kerala: {
+          tags: ["Nature", "Beaches"],
+          img: "https://images.unsplash.com/photo-1602216056096-3b40cc0c9944?w=400",
+          coords: [9.9312, 76.2673],
+          query: "Kochi, Kerala",
+        },
+        Delhi: {
+          tags: ["Culture", "City"],
+          img: "https://images.unsplash.com/photo-1587474260584-136574528ed5?w=400",
+          coords: [28.6139, 77.209],
+          query: "New Delhi, India",
+        },
+        Andaman: {
+          tags: ["Beaches", "Nature", "Adventure"],
+          img: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?w=400",
+          coords: [11.6234, 92.7265],
+          query: "Port Blair, Andaman",
+        },
+        Mawlynnong: {
+          tags: ["Nature", "Culture"],
+          img: "https://images.unsplash.com/photo-1544735716-392fe2489ffa?w=400",
+          coords: [25.2021, 91.9222],
+          query: "Mawlynnong, Meghalaya",
+        },
+        Majuli: {
+          tags: ["Culture", "Nature"],
+          img: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?w=400",
+          coords: [26.95, 94.1667],
+          query: "Majuli, Assam",
+        },
+      };
+
+      const placeCoords = {
+        Goa: {
+          "Baga Beach": [15.5553, 73.7517],
+          "Fort Aguada": [15.4925, 73.7736],
+          "Dudhsagar Waterfalls": [15.3144, 74.3144],
+          "Old Goa Churches": [15.5036, 73.9116],
+          "Anjuna Flea Market": [15.5732, 73.7406],
+        },
+        Manali: {
+          "Solang Valley": [32.3161, 77.1572],
+          "Hadimba Temple": [32.2483, 77.1814],
+          "Mall Road": [32.2432, 77.1892],
+          "Rohtang Pass": [32.367, 77.246],
+          "Vashisht Hot Springs": [32.266, 77.188],
+        },
+        Jaipur: {
+          "Amer Fort": [26.9855, 75.8513],
+          "Hawa Mahal": [26.9239, 75.8267],
+          "City Palace": [26.9258, 75.8236],
+          "Jantar Mantar": [26.9248, 75.8246],
+          "Nahargarh Fort": [26.9372, 75.8154],
+        },
+        Kerala: {
+          "Munnar Tea Gardens": [10.0889, 77.0595],
+          "Alleppey Backwaters": [9.4981, 76.3388],
+          "Kochi Fort": [9.9658, 76.2422],
+          "Wayanad Trails": [11.6854, 76.132],
+          "Athirappilly Falls": [10.2851, 76.5698],
+        },
+        Delhi: {
+          "Red Fort": [28.6562, 77.241],
+          "India Gate": [28.6129, 77.2295],
+          "Qutub Minar": [28.5245, 77.1855],
+          "Humayun's Tomb": [28.5933, 77.2507],
+          "Chandni Chowk": [28.6506, 77.2303],
+        },
+        Andaman: {
+          "Radhanagar Beach": [11.9845, 92.9506],
+          "Cellular Jail": [11.675, 92.747],
+          "Ross Island": [11.674, 92.762],
+          "Elephant Beach": [12.005, 92.95],
+          "Chidiya Tapu": [11.51, 92.7],
+        },
+        Mawlynnong: {
+          "Nohwet Living Root Bridge": [25.201, 91.91],
+          "Sky View Bamboo Treehouse": [25.203, 91.925],
+          "Church of the Epiphany": [25.2025, 91.919],
+          "Balancing Rock": [25.21, 91.93],
+        },
+        Majuli: {
+          "Samaguri Satra Mask Makers": [26.93, 94.15],
+          "Mising Tribal Village": [26.97, 94.18],
+          "Kamalabari Satra": [26.96, 94.21],
+          "Brahmaputra River Bank": [26.94, 94.16],
+        },
+      };
+
+      const costData = {
+        Goa: {
+          hotels: { budget: 1500, mid: 3000, lux: 6500 },
+          food: 800,
+          act: 1000,
+          tx: { Bus: 1500, Train: 1800, Flight: 4500, Taxi: 2000 },
+          places: [
+            "Baga Beach",
+            "Fort Aguada",
+            "Dudhsagar Waterfalls",
+            "Old Goa Churches",
+            "Anjuna Flea Market",
+          ],
+        },
+        Manali: {
+          hotels: { budget: 1000, mid: 2500, lux: 5000 },
+          food: 600,
+          act: 1200,
+          tx: { Bus: 1200, Train: 1500, Flight: 5000, Taxi: 2500 },
+          places: [
+            "Solang Valley",
+            "Hadimba Temple",
+            "Mall Road",
+            "Rohtang Pass",
+            "Vashisht Hot Springs",
+          ],
+        },
+        Jaipur: {
+          hotels: { budget: 1200, mid: 2500, lux: 5000 },
+          food: 700,
+          act: 800,
+          tx: { Bus: 800, Train: 1200, Flight: 3500, Taxi: 2000 },
+          places: [
+            "Amer Fort",
+            "Hawa Mahal",
+            "City Palace",
+            "Jantar Mantar",
+            "Nahargarh Fort",
+          ],
+        },
+        Kerala: {
+          hotels: { budget: 1500, mid: 3500, lux: 7000 },
+          food: 700,
+          act: 1500,
+          tx: { Bus: 1800, Train: 2000, Flight: 5500, Taxi: 3000 },
+          places: [
+            "Munnar Tea Gardens",
+            "Alleppey Backwaters",
+            "Kochi Fort",
+            "Wayanad Trails",
+            "Athirappilly Falls",
+          ],
+        },
+        Delhi: {
+          hotels: { budget: 1000, mid: 2500, lux: 6000 },
+          food: 600,
+          act: 500,
+          tx: { Bus: 600, Train: 1000, Flight: 3000, Taxi: 1500 },
+          places: [
+            "Red Fort",
+            "India Gate",
+            "Qutub Minar",
+            "Humayun's Tomb",
+            "Chandni Chowk",
+          ],
+        },
+        Andaman: {
+          hotels: { budget: 2000, mid: 4500, lux: 8000 },
+          food: 1000,
+          act: 2000,
+          tx: { Bus: 0, Train: 0, Flight: 7000, Taxi: 1500 },
+          places: [
+            "Radhanagar Beach",
+            "Cellular Jail",
+            "Ross Island",
+            "Elephant Beach",
+            "Chidiya Tapu",
+          ],
+        },
+        Mawlynnong: {
+          hotels: { budget: 1200, mid: 2800, lux: 5500 },
+          food: 600,
+          act: 800,
+          tx: { Bus: 1000, Train: 1400, Flight: 4500, Taxi: 2200 },
+          places: [
+            "Nohwet Living Root Bridge",
+            "Sky View Bamboo Treehouse",
+            "Church of the Epiphany",
+            "Balancing Rock",
+          ],
+        },
+        Majuli: {
+          hotels: { budget: 1000, mid: 2400, lux: 4800 },
+          food: 550,
+          act: 700,
+          tx: { Bus: 900, Train: 1300, Flight: 4200, Taxi: 2000 },
+          places: [
+            "Samaguri Satra Mask Makers",
+            "Mising Tribal Village",
+            "Kamalabari Satra",
+            "Brahmaputra River Bank",
+          ],
+        },
+      };
+
+      let userPreferences = [];
+      let maps = { home: null, explore: null, plan: null };
+      let mapLayers = { home: null, explore: null, plan: null };
+      let lastRoute = null;
+      const KEY_STORAGE = "smarttour_google_maps_key";
+      const RATING_CACHE = "smarttour_google_ratings";
+      let googleRatings = {};
+      let placesService = null;
+      const indiaCenter = [22.9734, 78.6569];
+      const lightTiles =
+        "https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png";
+      const darkTiles =
+        "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png";
+
+      function pinIcon(color) {
+        return L.divIcon({
+          className: "",
+          iconSize: [18, 18],
+          iconAnchor: [9, 9],
+          popupAnchor: [0, -10],
+          html: `<span style="display:block;width:16px;height:16px;border-radius:50%;background:${color};border:2px solid #fff;box-shadow:0 2px 8px rgba(0,0,0,.35)"></span>`,
+        });
+      }
+
+      function currentTiles() {
+        return document.body.classList.contains("dark-mode")
+          ? darkTiles
+          : lightTiles;
+      }
+
+      function createMap(id) {
+        const map = L.map(id, { scrollWheelZoom: true }).setView(
+          indiaCenter,
+          5,
+        );
+        const tiles = L.tileLayer(currentTiles(), {
+          attribution: "&copy; OpenStreetMap &copy; CARTO",
+          maxZoom: 18,
+        }).addTo(map);
+        mapLayers[
+          id === "homeMap" ? "home" : id === "exploreMap" ? "explore" : "plan"
+        ] = tiles;
+        return map;
+      }
+
+      function refreshTileLayers() {
+        const url = currentTiles();
+        Object.values(mapLayers).forEach((layer) => {
+          if (layer) layer.setUrl(url);
+        });
+      }
+
+      function popupHtml(name, extra) {
+        return `<h3>${name}</h3>${ratingBlock(name, false)}<p>${extra || ""}</p><button class="map-popup-btn" onclick="planGemTrip('${name}')">Plan trip</button>`;
+      }
+
+      function getGoogleKey() {
+        return (
+          document.getElementById("googleKey")?.value ||
+          localStorage.getItem(KEY_STORAGE) ||
+          ""
+        ).trim();
+      }
+
+      function setRatingStatus(msg, ok) {
+        const el = document.getElementById("googleRatingStatus");
+        if (!el) return;
+        el.className = ok ? "status-ok" : "status-warn";
+        el.textContent = msg;
+      }
+
+      function starsMarkup(rating) {
+        const pct = Math.max(0, Math.min(100, (Number(rating) / 5) * 100));
+        return `<span class="star-wrap" aria-label="${rating} out of 5"><span class="star-bg">★★★★★</span><span class="star-fg" style="width:${pct}%">★★★★★</span></span>`;
+      }
+
+      function ratingFromCache(key) {
+        return googleRatings[key] || null;
+      }
+
+      function ratingBlock(key, compact) {
+        const r = ratingFromCache(key);
+        if (!r || !r.rating) {
+          return `<div class="g-rating${compact ? " inline" : ""}" data-rating-key="${key}"><span class="muted">Google ★ —</span></div>`;
+        }
+        const count = r.count
+          ? `(${Number(r.count).toLocaleString("en-IN")})`
+          : "";
+        const link = r.mapsUrl
+          ? `<a class="g-link" href="${r.mapsUrl}" target="_blank" rel="noopener" onclick="event.stopPropagation()">Google</a>`
+          : `<span class="g-count">Google</span>`;
+        return `<div class="g-rating${compact ? " inline" : ""}" data-rating-key="${key}">${starsMarkup(r.rating)}<span>${Number(r.rating).toFixed(1)}</span><span class="g-count">${count}</span>${link}</div>`;
+      }
+
+      function ratingBadge(key) {
+        const r = ratingFromCache(key);
+        if (!r || !r.rating) return "";
+        return `<span class="g-badge">${starsMarkup(r.rating)} ${Number(r.rating).toFixed(1)}</span>`;
+      }
+
+      function paintRatings() {
+        document.querySelectorAll("[data-rating-key]").forEach((el) => {
+          const key = el.getAttribute("data-rating-key");
+          const compact = el.classList.contains("inline");
+          el.outerHTML = ratingBlock(key, compact);
+        });
+      }
+
+      function destCardHtml(dest, blurb, cta) {
+        const data = destinations[dest];
+        return `
+    <div class="card" onclick="planGemTrip('${dest}')">
+      <div class="card-img" style="background-image: url('${data.img}')">${ratingBadge(dest)}</div>
+      <div class="card-content">
+        <h3>${dest}</h3>
+        ${ratingBlock(dest, false)}
+        <p>${blurb || data.tags.join(" • ")}</p>
+        ${reviewHtml(dest)}
+        <span style="font-size:12px; font-weight:700; color:var(--accent);">${cta || "Plan Trip ➔"}</span>
+      </div>
+    </div>
+  `;
+      }
+
+      function loadRatingCache() {
+        try {
+          const raw = JSON.parse(localStorage.getItem(RATING_CACHE) || "{}");
+          const now = Date.now();
+          Object.keys(raw).forEach((k) => {
+            if (raw[k] && now - raw[k].at < 7 * 24 * 60 * 60 * 1000)
+              googleRatings[k] = raw[k];
+          });
+        } catch (e) {
+          googleRatings = {};
+        }
+      }
+
+      function saveRatingCache() {
+        localStorage.setItem(RATING_CACHE, JSON.stringify(googleRatings));
+      }
+
+      function loadGoogleScript(key) {
+        if (window.google && google.maps && google.maps.places)
+          return Promise.resolve();
+        return new Promise((resolve, reject) => {
+          const existing = document.getElementById("gmapsScript");
+          if (existing) {
+            existing.addEventListener("load", () => resolve());
+            existing.addEventListener("error", () =>
+              reject(new Error("Maps script failed")),
+            );
+            return;
+          }
+          window.gm_authFailure = () =>
+            setRatingStatus(
+              "Google key was rejected. Check billing and API restrictions.",
+              false,
+            );
+          const s = document.createElement("script");
+          s.id = "gmapsScript";
+          s.src =
+            "https://maps.googleapis.com/maps/api/js?key=" +
+            encodeURIComponent(key) +
+            "&libraries=places";
+          s.async = true;
+          s.onload = resolve;
+          s.onerror = () => reject(new Error("Could not load Google Maps JS"));
+          document.head.appendChild(s);
+        });
+      }
+
+      function googleTextSearch(query, coords) {
+        return new Promise((resolve) => {
+          if (!placesService) {
+            placesService = new google.maps.places.PlacesService(
+              document.createElement("div"),
+            );
+          }
+          const req = { query };
+          if (coords) {
+            req.location = new google.maps.LatLng(coords[0], coords[1]);
+            req.radius = 40000;
+          }
+          placesService.textSearch(req, (results, status) => {
+            if (
+              status === google.maps.places.PlacesServiceStatus.OK &&
+              results &&
+              results[0] &&
+              results[0].rating
+            ) {
+              const hit = results[0];
+              resolve({
+                rating: hit.rating,
+                count: hit.user_ratings_total || 0,
+                mapsUrl:
+                  hit.url ||
+                  "https://www.google.com/maps/search/?api=1&query=" +
+                    encodeURIComponent(query),
+                at: Date.now(),
+              });
+            } else {
+              resolve(null);
+            }
+          });
+        });
+      }
+
+      async function fetchGoogleRating(cacheKey, query, coords) {
+        if (googleRatings[cacheKey] && googleRatings[cacheKey].rating)
+          return googleRatings[cacheKey];
+        const hit = await googleTextSearch(query, coords);
+        if (hit) {
+          googleRatings[cacheKey] = hit;
+          saveRatingCache();
+        }
+        return hit;
+      }
+
+      function sleep(ms) {
+        return new Promise((r) => setTimeout(r, ms));
+      }
+
+      async function loadGoogleRatings(force) {
+        const key = getGoogleKey();
+        if (!key) {
+          setRatingStatus(
+            "No API key yet — ratings stay empty until you add one.",
+            false,
+          );
+          return;
+        }
+        localStorage.setItem(KEY_STORAGE, key);
+        setRatingStatus("Fetching Google ratings…", true);
+        try {
+          await loadGoogleScript(key);
+          const names = Object.keys(destinations);
+          for (let i = 0; i < names.length; i++) {
+            const dest = names[i];
+            if (!force && googleRatings[dest]?.rating) continue;
+            if (force) delete googleRatings[dest];
+            await fetchGoogleRating(
+              dest,
+              destinations[dest].query,
+              destinations[dest].coords,
+            );
+            await sleep(180);
+          }
+          const got = Object.keys(destinations).filter(
+            (d) => googleRatings[d]?.rating,
+          ).length;
+          setRatingStatus(
+            `Loaded Google ratings for ${got}/${names.length} places.`,
+            got > 0,
+          );
+          renderHomeGrid();
+          renderDestinations();
+          renderGems();
+          populateMaps();
+          paintRatings();
+        } catch (err) {
+          setRatingStatus(
+            err.message || "Could not load Google ratings.",
+            false,
+          );
+        }
+      }
+
+      function saveGoogleKey() {
+        const key = document.getElementById("googleKey").value.trim();
+        if (!key) {
+          setRatingStatus("Paste your Google Maps API key first.", false);
+          return;
+        }
+        localStorage.setItem(KEY_STORAGE, key);
+        loadGoogleRatings(true);
+      }
+
+      async function hydrateSightRatings(dest, places) {
+        if (
+          !getGoogleKey() ||
+          !(window.google && google.maps && google.maps.places)
+        )
+          return;
+        for (const name of places) {
+          const cacheKey = dest + "::" + name;
+          await fetchGoogleRating(
+            cacheKey,
+            name + ", " + dest + ", India",
+            (placeCoords[dest] || {})[name],
+          );
+          await sleep(180);
+        }
+        paintRatings();
+        if (maps.plan && lastRoute) {
+          maps.plan.eachLayer((layer) => {
+            if (layer instanceof L.Marker) {
+              /* popups refresh on next open via draw */
+            }
+          });
+        }
+      }
+
+      function clearPins(map) {
+        map.eachLayer((layer) => {
+          if (layer instanceof L.Marker || layer instanceof L.Polyline)
+            map.removeLayer(layer);
+        });
+      }
+
+      function addPlacePins(map) {
+        if (themeMode === "gems") {
+          Object.entries(hiddenGemDestinations).forEach(([key, x]) => {
+            L.marker(x.coords, { icon: pinIcon("#075fc9") })
+              .bindPopup(
+                `<h3>${x.name}</h3><p>💎 Hidden Gem • ${x.region}</p><button class="map-popup-btn" onclick="planHiddenGem('${key}')">Plan trip</button>`,
+              )
+              .addTo(map);
+          });
+          return;
+        }
+        origins.forEach((city) => {
+          L.marker(originCoords[city], { icon: pinIcon("#0284c7") })
+            .bindPopup(`<h3>${city}</h3><p>Origin city</p>`)
+            .addTo(map);
+        });
+        Object.keys(destinations).forEach((dest) => {
+          const data = destinations[dest];
+          const match =
+            userPreferences.length === 0 ||
+            userPreferences.some((tag) => data.tags.includes(tag));
+          if (!match) return;
+          L.marker(data.coords, { icon: pinIcon("#f97316") })
+            .bindPopup(popupHtml(dest, data.tags.join(" • ")))
+            .addTo(map);
+        });
+      }
+
+      function populateMaps() {
+        if (!maps.home) maps.home = createMap("homeMap");
+
+        clearPins(maps.home);
+        addPlacePins(maps.home);
+
+        if (maps.explore) {
+          clearPins(maps.explore);
+          addPlacePins(maps.explore);
+          if (lastRoute) drawRouteOnMap(maps.explore, lastRoute, false);
+        }
+
+        setTimeout(() => {
+          maps.home.invalidateSize();
+          if (maps.explore) maps.explore.invalidateSize();
+        }, 80);
+      }
+
+      function ensureExploreMap() {
+        if (!maps.explore) maps.explore = createMap("exploreMap");
+        clearPins(maps.explore);
+        addPlacePins(maps.explore);
+        if (lastRoute) drawRouteOnMap(maps.explore, lastRoute, false);
+        requestAnimationFrame(() => {
+          maps.explore.invalidateSize();
+          setTimeout(() => maps.explore.invalidateSize(), 200);
+        });
+      }
+
+      function focusMapPlace(name) {
+        if (!name || !maps.explore) return;
+        const dest = destinations[name];
+        const origin = originCoords[name];
+        const target = dest ? dest.coords : origin;
+        if (!target) return;
+        maps.explore.flyTo(target, 9, { duration: 1.1 });
+      }
+
+      function fitAllMarkers() {
+        if (!maps.explore) return;
+        const bounds = [];
+        origins.forEach((c) => bounds.push(originCoords[c]));
+        Object.values(destinations).forEach((d) => bounds.push(d.coords));
+        maps.explore.fitBounds(bounds, { padding: [28, 28], maxZoom: 6 });
+      }
+
+      function drawRouteOnMap(map, route, fit) {
+        const { origin, dest, originLatLng, destLatLng, line, sights } = route;
+        L.marker(originLatLng, { icon: pinIcon("#0284c7") })
+          .bindPopup(`<h3>${origin}</h3><p>Starting point</p>`)
+          .addTo(map);
+        L.marker(destLatLng, { icon: pinIcon("#f97316") })
+          .bindPopup(popupHtml(dest, "Trip destination"))
+          .addTo(map);
+        L.polyline(line, { color: "#7c3aed", weight: 4, opacity: 0.85 }).addTo(
+          map,
+        );
+        (sights || []).forEach((s) => {
+          const key = dest + "::" + s.name;
+          L.marker(s.coords, { icon: pinIcon("#16a34a") })
+            .bindPopup(
+              `<h3>${s.name}</h3>${ratingBlock(key, false)}<p>Sightseeing stop</p>`,
+            )
+            .addTo(map);
+        });
+        if (fit)
+          map.fitBounds(
+            L.latLngBounds(line.concat((sights || []).map((s) => s.coords))),
+            { padding: [36, 36] },
+          );
+      }
+
+      async function fetchRouteLine(from, to) {
+        const url = `https://router.project-osrm.org/route/v1/driving/${from[1]},${from[0]};${to[1]},${to[0]}?overview=full&geometries=geojson`;
+        try {
+          const res = await fetch(url);
+          const json = await res.json();
+          if (json.routes && json.routes[0]) {
+            return json.routes[0].geometry.coordinates.map(([lng, lat]) => [
+              lat,
+              lng,
+            ]);
+          }
+        } catch (e) {
+          /* fallback below */
+        }
+        return [from, to];
+      }
+
+      async function updateTripMap(origin, dest, places) {
+        const originLatLng = originCoords[origin];
+        const destLatLng = destinations[dest].coords;
+        const sights = (places || [])
+          .slice(0, 5)
+          .map((name) => {
+            const coords = placeCoords[dest] && placeCoords[dest][name];
+            return coords ? { name, coords } : null;
+          })
+          .filter(Boolean);
+        const line = await fetchRouteLine(originLatLng, destLatLng);
+        lastRoute = { origin, dest, originLatLng, destLatLng, line, sights };
+
+        const el = document.getElementById("planMap");
+        if (!el) return;
+        if (maps.plan) {
+          maps.plan.remove();
+          maps.plan = null;
+          mapLayers.plan = null;
+        }
+        maps.plan = createMap("planMap");
+        drawRouteOnMap(maps.plan, lastRoute, true);
+        populateMaps();
+        setTimeout(() => maps.plan && maps.plan.invalidateSize(), 120);
+      }
+
+      function navButtonFor(sectionId) {
+        const map = {
+          home: 0,
+          destinations: 1,
+          map: 2,
+          planner: 3,
+          transport: 4,
+          favourite: 5,
+          history: 6,
+          gems: 7,
+        };
+        return document.querySelectorAll(".nav button")[map[sectionId]];
+      }
+
+      // Init
+      window.onload = () => {
+        applyTheme();
+        let originOpts = origins
+          .map((o) => `<option value="${o}">${o}</option>`)
+          .join("");
+        document.getElementById("quickFrom").innerHTML = originOpts;
+        document.getElementById("planFrom").innerHTML = originOpts;
+
+        let destOpts = Object.keys(destinations)
+          .map((d) => `<option value="${d}">${d}</option>`)
+          .join("");
+        document.getElementById("quickDest").innerHTML = destOpts;
+        document.getElementById("planDest").innerHTML = destOpts;
+        document.getElementById("mapFocus").innerHTML =
+          '<option value="">Fly to a place…</option>' + destOpts;
+
+        document.getElementById("quickDest").addEventListener("change", (e) => {
+          if (maps.home && destinations[e.target.value])
+            maps.home.flyTo(destinations[e.target.value].coords, 8);
+        });
+        document.getElementById("quickFrom").addEventListener("change", (e) => {
+          if (maps.home && originCoords[e.target.value])
+            maps.home.flyTo(originCoords[e.target.value], 8);
+        });
+
+        renderDestinations();
+        renderHomeGrid();
+        populateMaps();
+        setTimeout(
+          () =>
+            document
+              .getElementById("skeletonScreen")
+              ?.classList.add("skeleton-hidden"),
+          650,
+        );
+      };
+
+      function showSection(id, btn) {
+        document
+          .querySelectorAll(".section")
+          .forEach((s) => s.classList.remove("active"));
+        document.getElementById(id).classList.add("active");
+        if (btn) {
+          document
+            .querySelectorAll(".nav button")
+            .forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+        }
+        setTimeout(() => {
+          if (id === "home" && maps.home) maps.home.invalidateSize();
+          if (id === "map") ensureExploreMap();
+          if (id === "planner" && maps.plan) maps.plan.invalidateSize();
+        }, 80);
+      }
+
+      function toggleTheme() {
+        document.body.classList.toggle("dark-mode");
+        document.getElementById("themeBtn").textContent =
+          document.body.classList.contains("dark-mode") ? "☀️" : "🌙";
+        refreshTileLayers();
+      }
+
+      function openModal(id) {
+        document.getElementById(id).classList.add("active");
+      }
+      function closeModal(id) {
+        document.getElementById(id).classList.remove("active");
+      }
+
+      function executeLogin() {
+        const id = document.getElementById("loginId").value;
+        const pass = document.getElementById("loginPass").value;
+        if (id === "user@smarttour.com" && pass === "demo123") {
+          closeModal("loginModal");
+          document.getElementById("loginBtn").style.display = "none";
+          document.getElementById("user-profile").style.display = "flex";
+          setTimeout(() => openModal("photoModal"), 400);
+        } else {
+          alert("Invalid credentials! Use: user@smarttour.com / demo123");
+        }
+      }
+
+      function logout() {
+        if (confirm("Are you sure you want to log out?")) {
+          document.getElementById("loginBtn").style.display = "block";
+          document.getElementById("user-profile").style.display = "none";
+          userPreferences = [];
+          document.getElementById("userTagsDisplay").innerHTML = "";
+          renderDestinations();
+          populateMaps();
+        }
+      }
+
+      function savePreferences() {
+        const selected = document.querySelectorAll(".photo-card.selected");
+        userPreferences = Array.from(selected).map((card) =>
+          card.getAttribute("data-tag"),
+        );
+        closeModal("photoModal");
+
+        if (userPreferences.length > 0) {
+          document.getElementById("userTagsDisplay").innerHTML = userPreferences
+            .map((t) => `<span class="tag-badge">${t}</span>`)
+            .join("");
+        }
+
+        showSection("destinations", navButtonFor("destinations"));
+        renderDestinations();
+        populateMaps();
+      }
+
+      function planGemTrip(gemName) {
+        document.getElementById("quickDest").value = gemName;
+        document.getElementById("planDest").value = gemName;
+        showSection("planner", navButtonFor("planner"));
+        makePlan();
+      }
+
+      function selectTransportMode(modeType) {
+        document.getElementById("planTransport").value = modeType;
+
+        const luxCard = document.getElementById("transLuxCard");
+        const budCard = document.getElementById("transBudCard");
+        if (modeType === "Flight") {
+          luxCard.classList.add("selected-transport");
+          budCard.classList.remove("selected-transport");
+        } else {
+          budCard.classList.add("selected-transport");
+          luxCard.classList.remove("selected-transport");
+        }
+
+        showSection("planner", navButtonFor("planner"));
+        makePlan();
+      }
+
+      function renderHomeGridOriginal() {
+        const grid = document.getElementById("homeGrid");
+        grid.innerHTML = ["Goa", "Manali", "Jaipur", "Kerala"]
+          .map((dest) => destCardHtml(dest))
+          .join("");
+      }
+
+      function renderDestinationsOriginal() {
+        const grid = document.getElementById("destGrid");
+        let html = "";
+        Object.keys(destinations).forEach((dest) => {
+          const data = destinations[dest];
+          const match =
+            userPreferences.length === 0 ||
+            userPreferences.some((tag) => data.tags.includes(tag));
+          if (match) html += destCardHtml(dest);
+        });
+        grid.innerHTML =
+          html ||
+          "<p>No destinations match your selected tags. Try selecting more options!</p>";
+      }
+
+      function renderGems() {
+        const grid = document.getElementById("gemsGrid");
+        if (!grid) return;
+
+        grid.innerHTML =
+          destCardHtml(
+            "Mawlynnong",
+            "Meghalaya • Asia's Cleanest Village, Living Root Bridges",
+            "Plan Trip to Mawlynnong ➔",
+          ) +
+          destCardHtml(
+            "Majuli",
+            "Assam • World's Largest River Island, Satra Monasteries",
+            "Plan Trip to Majuli ➔",
+          );
+      }
+
+      function renderHomeGrid() {
+        const g = document.getElementById("homeGrid");
+        if (!g) return;
+        if (themeMode === "gems") {
+          g.innerHTML = Object.keys(hiddenGemDestinations)
+            .slice(0, 4)
+            .map(hiddenGemCard)
+            .join("");
+        } else renderHomeGridOriginal();
+      }
+      function renderDestinations() {
+        const g = document.getElementById("destGrid");
+        if (!g) return;
+        if (themeMode === "gems") {
+          g.innerHTML = Object.keys(hiddenGemDestinations)
+            .map(hiddenGemCard)
+            .join("");
+        } else renderDestinationsOriginal();
+      }
+
+      function syncPlannerAndGenerate() {
+        document.getElementById("planFrom").value =
+          document.getElementById("quickFrom").value;
+        document.getElementById("planDest").value =
+          document.getElementById("quickDest").value;
+        document.getElementById("planGroup").value =
+          document.getElementById("quickGroup").value;
+        document.getElementById("planHours").value =
+          document.getElementById("quickHours").value;
+        document.getElementById("planDays").value =
+          document.getElementById("quickDays").value;
+        document.getElementById("planBudget").value =
+          document.getElementById("quickBudget").value;
+        showSection("planner", navButtonFor("planner"));
+        makePlan();
+      }
+
+      function money(n) {
+        return "₹" + Math.round(n).toLocaleString("en-IN");
+      }
+
+      function makePlan() {
+        let origin = document.getElementById("planFrom").value;
+        let dest = document.getElementById("planDest").value;
+        let groupSize = parseInt(document.getElementById("planGroup").value);
+        let hoursOutside =
+          parseInt(document.getElementById("planHours").value) || 6;
+        let days = parseInt(document.getElementById("planDays").value);
+        let budget = parseInt(document.getElementById("planBudget").value);
+        let prefTx = document.getElementById("planTransport").value;
+
+        let cd = costData[dest];
+        if (!cd) return;
+
+        let budgetPerPerson = budget / groupSize;
+        let level =
+          budgetPerPerson < days * 2500
+            ? "budget"
+            : budgetPerPerson < days * 5000
+              ? "mid"
+              : "lux";
+
+        let roomsNeeded = Math.ceil(groupSize / 2);
+        let hotelTotal = cd.hotels[level] * roomsNeeded * days;
+        let foodTotal = cd.food * days * groupSize;
+        let actTotal = cd.act * Math.min(days, 3) * groupSize;
+        let txCost = cd.tx[prefTx] || cd.tx["Bus"];
+        let transportTotal = txCost * groupSize;
+
+        let totalCost = hotelTotal + foodTotal + actTotal + transportTotal;
+        let remaining = budget - totalCost;
+
+        let out = `
+    <div class="result">
+      <h2>Trip: ${origin} ➔ ${dest} — ${days} Day Smart Itinerary for ${groupSize} Traveler(s)</h2>
+      <div class="row"><span>✈️ Transport (${prefTx})</span><b>${money(transportTotal)}</b></div>
+      <div class="row"><span>🏨 Hotel (${roomsNeeded} Room(s), ${level})</span><b>${money(hotelTotal)}</b></div>
+      <div class="row"><span>🍴 Food & Cuisine</span><b>${money(foodTotal)}</b></div>
+      <div class="row"><span>🎟️ Local Sightseeing & Activities</span><b>${money(actTotal)}</b></div>
+      <h3>💰 Total Estimated Cost: ${money(totalCost)}</h3>
+      <p class="${remaining >= 0 ? "ok" : "warn"}">
+        <b>${remaining >= 0 ? "✓ Within budget (Estimated savings: " + money(remaining) + ")" : "⚠ Over budget by " + money(Math.abs(remaining))}</b>
+      </p>
+      
+      <h3>🗺️ Live route map</h3>
+      <div id="planMap" class="map-wrap plan"></div>
+      <p style="color:var(--text-muted); font-size:12px; margin:0 0 12px;">Blue = origin, orange = destination, green = sights. Route follows live driving geometry when available.</p>
+      
+      <h3>⏰ Daily Schedule (Tailored for ~${hoursOutside} hours of daily exploration)</h3>
+  `;
+
+        for (let day = 0; day < days; day++) {
+          let p1 = cd.places[day % cd.places.length];
+          let p2 = cd.places[(day + 1) % cd.places.length];
+          let p3 = cd.places[(day + 2) % cd.places.length];
+
+          let dayHtml = `<div class="dayplan"><h4>Day ${day + 1}</h4>`;
+
+          if (hoursOutside <= 4) {
+            dayHtml += `<p>10:00 AM — Morning exploration around ${p1}</p>`;
+            dayHtml += `<p>01:00 PM — Local regional lunch</p>`;
+            dayHtml += `<p style="font-style:italic; font-size:12px;">(Light pacing applied according to your preference)</p>`;
+          } else if (hoursOutside <= 7) {
+            dayHtml += `<p>09:30 AM — Morning tour at ${p1}</p>`;
+            dayHtml += `<p>01:00 PM — Traditional lunch</p>`;
+            dayHtml += `<p>03:00 PM — Afternoon visit to ${p2}</p>`;
+            dayHtml += `<p>05:30 PM — Return back to accommodation to rest</p>`;
+          } else {
+            dayHtml += `<p>08:30 AM — Early departure & head toward ${p1}</p>`;
+            dayHtml += `<p>01:00 PM — Authentic local lunch experience</p>`;
+            dayHtml += `<p>02:30 PM — Afternoon excursion at ${p2}</p>`;
+            dayHtml += `<p>05:30 PM — Sunset views / Evening relaxation near ${p3}</p>`;
+            dayHtml += `<p>08:30 PM — Dinner & cultural leisure</p>`;
+          }
+
+          dayHtml += `</div>`;
+          out += dayHtml;
+        }
+
+        out += `</div>`;
+        document.getElementById("planResult").innerHTML = out;
+        updateTripMap(origin, dest, cd.places);
+      }
+    </script>
+  </body>
+</html>
